@@ -100,23 +100,32 @@ export function mapStores<Stores extends any[]>(
   ...stores: [...Stores]
 ): _Spread<Stores> {
   if (__DEV__ && Array.isArray(stores[0])) {
-    console.warn(
-      `[🍍]: Directly pass all stores to "mapStores()" without putting them in an array:\n` +
-        `Replace\n` +
-        `\tmapStores([useAuthStore, useCartStore])\n` +
-        `with\n` +
-        `\tmapStores(useAuthStore, useCartStore)\n` +
-        `This will fail in production if not fixed.`
-    )
-    stores = stores[0]
+    const isCustomNameStore =
+      stores[0].length === 2 && typeof stores[0][0] === 'string'
+
+    if (!isCustomNameStore) {
+      console.warn(
+        `[🍍]: Directly pass all stores to "mapStores()" without putting them in an array:\n` +
+          `Replace\n` +
+          `\tmapStores([useAuthStore, useCartStore])\n` +
+          `with\n` +
+          `\tmapStores(useAuthStore, useCartStore)\n` +
+          `This will fail in production if not fixed.`
+      )
+      stores = stores[0]
+    }
   }
 
   return stores.reduce((reduced, useStore) => {
+    const [storeName, useStoreFn] = Array.isArray(useStore)
+      ? [useStore[0], useStore[1]]
+      : [useStore.$id, useStore]
+
     // @ts-expect-error: $id is added by defineStore
-    reduced[useStore.$id + mapStoreSuffix] = function (
+    reduced[storeName + mapStoreSuffix] = function (
       this: ComponentPublicInstance
     ) {
-      return useStore(this.$pinia)
+      return useStoreFn(this.$pinia)
     }
     return reduced
   }, {} as _Spread<Stores>)

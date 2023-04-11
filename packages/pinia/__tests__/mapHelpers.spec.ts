@@ -69,6 +69,37 @@ describe('Map Helpers', () => {
       mapStores([])
       expect('pass all stores to "mapStores()"').toHaveBeenWarned()
     })
+
+    it('should not warn when store as an array is passed', async () => {
+      const pinia = createPinia()
+
+      const Component = defineComponent({
+        template: `<p></p>`,
+        computed: {
+          ...mapStores(['customName', useStore]),
+        },
+      })
+      const wrapper = mount(Component, { global: { plugins: [pinia] } })
+
+      expect('pass all stores to "mapStores()"').not.toHaveBeenWarned()
+      // @ts-expect-error: by default this shouldn't exist
+      expect(wrapper.vm.customName).toBeDefined()
+    })
+
+    it('should allow passing an array as store element', async () => {
+      const pinia = createPinia()
+
+      const Component = defineComponent({
+        template: `<p></p>`,
+        computed: {
+          ...mapStores(useStore, ['customName', useStore]),
+        },
+      })
+      const wrapper = mount(Component, { global: { plugins: [pinia] } })
+
+      // @ts-expect-error: by default this shouldn't exist
+      expect(wrapper.vm.customName).toBeDefined()
+    })
   })
 
   it('mapGetters', () => {
